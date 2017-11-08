@@ -121,3 +121,36 @@ func (u *UserConfig) Token() string {
 	u.readConfig(u.configFile())
 	return u.values[tokenKey]
 }
+
+// Config is a configuration that works both for file configuration and environment variables.
+// The environment variables will override the configuration file.
+type Config struct {
+	fileConfig UserConfig
+	envConfig  EnvironmentConfig
+}
+
+// NewConfig creates a new configuration
+func NewConfig() *Config {
+	return &Config{}
+}
+
+// Address returns configured address. The address will first be read from
+// the file configuration. If neither are set it will return the default
+// address.
+func (c *Config) Address() string {
+	address := c.fileConfig.Address()
+	if c.envConfig.Address() != DefaultAddr {
+		return c.envConfig.Address()
+	}
+	return address
+}
+
+// Token returns the configured token. The environment variable will override the
+// file configuration. I
+func (c *Config) Token() string {
+	token := c.fileConfig.Token()
+	if c.envConfig.Token() != "" {
+		return c.envConfig.Token()
+	}
+	return token
+}

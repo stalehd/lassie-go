@@ -51,8 +51,8 @@ func TestEnvironmentConfig(t *testing.T) {
 }
 
 func TestClientConfig(t *testing.T) {
-	_, err := NewWithConfig(&EnvironmentConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Just exercise the configurations
+	NewEnvironmentConfig()
+	NewUserConfig()
+	NewConfig()
 }
