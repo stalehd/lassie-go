@@ -27,6 +27,11 @@ func NewWithConfig(config ClientConfig) (*Client, error) {
 type EnvironmentConfig struct {
 }
 
+// NewEnvironmentConfig creates a new EnvironmentConfig
+func NewEnvironmentConfig() *EnvironmentConfig {
+	return &EnvironmentConfig{}
+}
+
 // Address tries to retrieve the endpoint address (ie https://api.lora.telenor.io)
 // from the environment variable LASSIE_ADDRESS. If is empty it will return the
 // default.
@@ -52,6 +57,11 @@ func (e *EnvironmentConfig) Token() string {
 // Note: This isn't tested on Windows.
 type UserConfig struct {
 	values map[string]string
+}
+
+// NewUserConfig creates a new UserConfig
+func NewUserConfig() *UserConfig {
+	return &UserConfig{}
 }
 
 const (
