@@ -3,9 +3,10 @@ package lassie
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
+	"path/filepath"
 	"strings"
 )
 
@@ -54,10 +55,17 @@ type UserConfig struct {
 }
 
 const (
-	configFileName = "~/.lassie"
-	addressKey     = "address"
-	tokenKey       = "token"
+	addressKey = "address"
+	tokenKey   = "token"
 )
+
+func (u *UserConfig) configFile() string {
+	usr, err := user.Current()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(usr.HomeDir, ".lassie")
+}
 
 // readConfig populates the values map with two elements -- "token" and
 // "address"
@@ -69,7 +77,7 @@ func (u *UserConfig) readConfig(filename string) map[string]string {
 
 		buf, err := ioutil.ReadFile(filename)
 		if err != nil {
-			panic(fmt.Sprintf("Unable to read configuration file: %v", err))
+			return u.values
 		}
 		scanner := bufio.NewScanner(bytes.NewReader(buf))
 		scanner.Split(bufio.ScanLines)
@@ -91,15 +99,15 @@ func (u *UserConfig) readConfig(filename string) map[string]string {
 
 // Address reads the configuration file and checks if the file has the field
 // "address". If the field isn't found it will use the default address. If the
-// configuration file is missing it will panic.
+// file is missing it will use the defaults
 func (u *UserConfig) Address() string {
-	u.readConfig(configFileName)
+	u.readConfig(u.configFile())
 	return u.values[addressKey]
 }
 
 // Token reads the API token from the field "token" in the configuration
-// file. If the configuration file is missing it will panic.
+// file. If the configuration file is missing it will return the defaults.
 func (u *UserConfig) Token() string {
-	u.readConfig(configFileName)
+	u.readConfig(u.configFile())
 	return u.values[tokenKey]
 }
