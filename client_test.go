@@ -1,33 +1,30 @@
 package lassie
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"testing"
 )
 
-var (
-	addr  = flag.String("addr", DefaultAddr, "address")
-	token = flag.String("token", "", "token")
-)
-
 func TestMain(m *testing.M) {
-	flag.Parse()
-	if *token == "" {
-		if _, err := NewWithAddr(*addr, ""); err != nil {
-			fmt.Println("Error creating client:", err)
-			fmt.Println("You might need to specify a token when running the tests against", *addr)
-			fmt.Println("Run `go test -args -token <your-api-token>`.")
-			os.Exit(1)
-		}
+	if _, err := New(); err != nil {
+		fmt.Println("Error creating client:", err)
+		fmt.Println("You might have to configure Lassie via a configuration file or environment variables")
+		os.Exit(1)
 	}
 
 	os.Exit(m.Run())
 }
 
 func TestNew(t *testing.T) {
-	_, err := NewWithAddr(*addr, *token)
+	if _, err := New(); err != nil {
+		t.Fatal("Unable to create the Lassie client. You might have to configure it either through environment variables or through a configuration file")
+	}
+
+}
+
+func TestNewWithAddress(t *testing.T) {
+	_, err := NewWithAddr(addressTokenFromConfig(ConfigFile))
 	if err != nil {
 		t.Fatal(err)
 	}

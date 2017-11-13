@@ -6,7 +6,7 @@ import (
 )
 
 func TestDevice(t *testing.T) {
-	client, err := NewWithAddr(*addr, *token)
+	client, err := New()
 	if err != nil {
 		t.Fatal(err)
 	}

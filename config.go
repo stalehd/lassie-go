@@ -10,147 +10,79 @@ import (
 	"strings"
 )
 
-// ClientConfig is a client configuration for Lassie-go
-type ClientConfig interface {
-	// Address returns the address to use
-	Address() string
-	// Token returns the token to use
-	Token() string
-}
+const (
+	// ConfigFile is the default name for the config file. The configuration
+	// file is a plain text file that contains the default Lassie configuration.
+	// The configuration file is expected to be at the current home directory.
+	ConfigFile = ".lassie"
 
-// NewWithConfig creates a new client with the provided configuration
-func NewWithConfig(config ClientConfig) (*Client, error) {
-	return NewWithAddr(config.Address(), config.Token())
-}
+	// AddressEnvironmentVariable is the name of the environment variable that
+	// can be used to override the address set in the configuration file.
+	// If the  environment variable isn't set (or is empty) the configuration
+	// file settings will be used.
+	AddressEnvironmentVariable = "LASSIE_ADDRESS"
 
-// EnvironmentConfig gets its configuration from environment variables
-type EnvironmentConfig struct {
-}
+	// TokenEnvironmentVariable is the name of the environment variable that
+	// can be used to override the token set in the configuration file.
+	TokenEnvironmentVariable = "LASSIE_TOKEN"
+)
 
-// NewEnvironmentConfig creates a new EnvironmentConfig
-func NewEnvironmentConfig() *EnvironmentConfig {
-	return &EnvironmentConfig{}
-}
-
-// Address tries to retrieve the endpoint address (ie https://api.lora.telenor.io)
-// from the environment variable LASSIE_ADDRESS. If is empty it will return the
-// default.
-func (e *EnvironmentConfig) Address() string {
-	endpoint := os.Getenv("LASSIE_ADDRESS")
-	if endpoint == "" {
-		return DefaultAddr
-	}
-	return endpoint
-}
-
-// Token returns the token from the environment variable LASSIE_TOKEN
-func (e *EnvironmentConfig) Token() string {
-	return os.Getenv("LASSIE_TOKEN")
-}
-
-// UserConfig gets its configuration from a file named ~/.lassie
-//
-// The configuration format is quite simple with "key=value" entries on each
-// line. Only two parameters are supported -- "Address" and "Token". The Address
-// parameter is optional.
-//
-// Note: This isn't tested on Windows.
-type UserConfig struct {
-	values map[string]string
-}
-
-// NewUserConfig creates a new UserConfig
-func NewUserConfig() *UserConfig {
-	return &UserConfig{}
-}
+// These are the configuration file directives.
 
 const (
 	addressKey = "address"
 	tokenKey   = "token"
 )
 
-func (u *UserConfig) configFile() string {
+// Return both address and token from configuration file. The file name is
+// for testing purposes; use the ConfigFile constant when calling the functino.
+func addressTokenFromConfig(filename string) (string, string) {
+	address, token := readConfig(getFullPath(filename))
+
+	envAddress := os.Getenv(AddressEnvironmentVariable)
+	if envAddress != "" {
+		address = envAddress
+	}
+
+	envToken := os.Getenv(TokenEnvironmentVariable)
+	if envToken != "" {
+		token = envToken
+	}
+
+	return address, token
+}
+
+func getFullPath(filename string) string {
 	usr, err := user.Current()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(usr.HomeDir, ".lassie")
+	return filepath.Join(usr.HomeDir, filename)
 }
 
-// readConfig populates the values map with two elements -- "token" and
-// "address"
-func (u *UserConfig) readConfig(filename string) map[string]string {
-	if u.values == nil {
-		u.values = make(map[string]string)
-		u.values[addressKey] = DefaultAddr
-		u.values[tokenKey] = ""
+// readConfig reads the config file and returns the address and token
+// settings from the file.
+func readConfig(filename string) (string, string) {
+	address := DefaultAddr
+	token := ""
 
-		buf, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return u.values
+	buf, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return address, token
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(buf))
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		words := strings.Split(scanner.Text(), "=")
+		if len(words) == 1 {
+			continue
 		}
-		scanner := bufio.NewScanner(bytes.NewReader(buf))
-		scanner.Split(bufio.ScanLines)
-		for scanner.Scan() {
-			words := strings.Split(scanner.Text(), "=")
-			if len(words) == 1 {
-				continue
-			}
-			switch strings.ToLower(strings.TrimSpace(words[0])) {
-			case addressKey:
-				u.values[addressKey] = strings.TrimSpace(words[1])
-			case tokenKey:
-				u.values[tokenKey] = strings.TrimSpace(words[1])
-			}
+		switch strings.ToLower(strings.TrimSpace(words[0])) {
+		case addressKey:
+			address = strings.TrimSpace(words[1])
+		case tokenKey:
+			token = strings.TrimSpace(words[1])
 		}
 	}
-	return u.values
-}
-
-// Address reads the configuration file and checks if the file has the field
-// "address". If the field isn't found it will use the default address. If the
-// file is missing it will use the defaults
-func (u *UserConfig) Address() string {
-	u.readConfig(u.configFile())
-	return u.values[addressKey]
-}
-
-// Token reads the API token from the field "token" in the configuration
-// file. If the configuration file is missing it will return the defaults.
-func (u *UserConfig) Token() string {
-	u.readConfig(u.configFile())
-	return u.values[tokenKey]
-}
-
-// Config is a configuration that works both for file configuration and environment variables.
-// The environment variables will override the configuration file.
-type Config struct {
-	fileConfig UserConfig
-	envConfig  EnvironmentConfig
-}
-
-// NewConfig creates a new configuration
-func NewConfig() *Config {
-	return &Config{}
-}
-
-// Address returns configured address. The address will first be read from
-// the file configuration. If neither are set it will return the default
-// address.
-func (c *Config) Address() string {
-	address := c.fileConfig.Address()
-	if c.envConfig.Address() != DefaultAddr {
-		return c.envConfig.Address()
-	}
-	return address
-}
-
-// Token returns the configured token. The environment variable will override the
-// file configuration. I
-func (c *Config) Token() string {
-	token := c.fileConfig.Token()
-	if c.envConfig.Token() != "" {
-		return c.envConfig.Token()
-	}
-	return token
+	return address, token
 }

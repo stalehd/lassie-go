@@ -21,8 +21,8 @@ type Client struct {
 	client http.Client
 }
 
-func New(token string) (*Client, error) {
-	return NewWithAddr(DefaultAddr, token)
+func New() (*Client, error) {
+	return NewWithAddr(addressTokenFromConfig(ConfigFile))
 }
 
 func NewWithAddr(addr, token string) (*Client, error) {

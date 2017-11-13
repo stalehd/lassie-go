@@ -6,53 +6,56 @@ import (
 	"testing"
 )
 
-func TestUserConfig(t *testing.T) {
-	contents := "address=http://example.com\ntoken=sometoken"
-	tempFile := "tempconfig"
-	ioutil.WriteFile(tempFile, []byte(contents), 0666)
+func TestFileDefaultConfig(t *testing.T) {
 
-	uc := UserConfig{}
-	uc.values = uc.readConfig(tempFile)
-	if uc.Address() != "http://example.com" || uc.Token() != "sometoken" {
-		t.Fatalf("Configuration isn't the expected values: %v", uc)
+	contents := "address=http://example.com\ntoken=sometoken"
+	tempFile := "lassie.testconfig"
+	ioutil.WriteFile(getFullPath(tempFile), []byte(contents), 0666)
+
+	// unset the environment first to make sure it won't interfere with the
+	// file
+	oldAddr := os.Getenv(AddressEnvironmentVariable)
+	oldToken := os.Getenv(TokenEnvironmentVariable)
+	defer func() {
+		os.Setenv(AddressEnvironmentVariable, oldAddr)
+		os.Setenv(TokenEnvironmentVariable, oldToken)
+	}()
+
+	os.Setenv(AddressEnvironmentVariable, "")
+	os.Setenv(TokenEnvironmentVariable, "")
+
+	address, token := addressTokenFromConfig(tempFile)
+	if address != "http://example.com" || token != "sometoken" {
+		t.Fatalf("Configuration isn't the expected values: %s / %s", address, token)
 	}
 
 	contents = "token=foobar\nsome=thing\nother=thing\n\n\n"
-	ioutil.WriteFile(tempFile, []byte(contents), 0666)
-	uc = UserConfig{}
-	uc.values = uc.readConfig(tempFile)
-	if uc.Address() != DefaultAddr || uc.Token() != "foobar" {
-		t.Fatalf("Configuration isn't the expected values: %v", uc)
+	ioutil.WriteFile(getFullPath(tempFile), []byte(contents), 0666)
+	address, token = addressTokenFromConfig(tempFile)
+	if address != DefaultAddr || token != "foobar" {
+		t.Fatalf("Configuration isn't the expected values: %s / %s", address, token)
 	}
 
-	os.Remove(tempFile)
+	os.Remove(getFullPath(tempFile))
 }
 
 func TestEnvironmentConfig(t *testing.T) {
-	os.Setenv("LASSIE_ADDRESS", "")
-	os.Setenv("LASSIE_TOKEN", "")
+	oldAddr := os.Getenv(AddressEnvironmentVariable)
+	oldToken := os.Getenv(TokenEnvironmentVariable)
+	defer func() {
+		os.Setenv(AddressEnvironmentVariable, oldAddr)
+		os.Setenv(TokenEnvironmentVariable, oldToken)
+	}()
 
-	env := EnvironmentConfig{}
-	if env.Address() != DefaultAddr {
-		t.Fatal("Expected address to be default")
-	}
-	if env.Token() != "" {
-		t.Fatal("Expected token to be empty")
-	}
+	os.Setenv(AddressEnvironmentVariable, "something")
+	os.Setenv(TokenEnvironmentVariable, "other")
 
-	os.Setenv("LASSIE_ADDRESS", "https://example.com")
-	os.Setenv("LASSIE_TOKEN", "foo")
-	if env.Address() != "https://example.com" {
+	address, token := addressTokenFromConfig(ConfigFile)
+
+	if address != "something" {
 		t.Fatal("Expected environment variable to override config")
 	}
-	if env.Token() != "foo" {
+	if token != "other" {
 		t.Fatal("Expected environment variable to override config")
 	}
-}
-
-func TestClientConfig(t *testing.T) {
-	// Just exercise the configurations
-	NewEnvironmentConfig()
-	NewUserConfig()
-	NewConfig()
 }
