@@ -13,7 +13,8 @@ func TestFileDefaultConfig(t *testing.T) {
 	ioutil.WriteFile(getFullPath(tempFile), []byte(contents), 0666)
 
 	// unset the environment first to make sure it won't interfere with the
-	// file
+	// file. It might contain settings that is in use so set it back to the
+	// original value afterwards.
 	oldAddr := os.Getenv(AddressEnvironmentVariable)
 	oldToken := os.Getenv(TokenEnvironmentVariable)
 	defer func() {

@@ -11,6 +11,10 @@ import (
 )
 
 const (
+	// DefaultAddr is the default address of the Congress API. You normally won't
+	// have to change this.
+	DefaultAddr = "https://api.lora.telenor.io"
+
 	// ConfigFile is the default name for the config file. The configuration
 	// file is a plain text file that contains the default Lassie configuration.
 	// The configuration file is expected to be at the current home directory.

@@ -13,8 +13,6 @@ import (
 	"net/http"
 )
 
-const DefaultAddr = "https://api.lora.telenor.io"
-
 type Client struct {
 	addr   string
 	token  string
