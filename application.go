@@ -93,8 +93,6 @@ func (c *Client) ApplicationStream(appeui string, handler func(DeviceData)) erro
 			// Ignore it
 		}
 	}
-
-	return nil
 }
 
 // DeviceData represents data received from a device.
