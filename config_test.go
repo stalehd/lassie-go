@@ -11,6 +11,7 @@ func TestFileDefaultConfig(t *testing.T) {
 	contents := "address=http://example.com\ntoken=sometoken"
 	tempFile := "lassie.testconfig"
 	ioutil.WriteFile(getFullPath(tempFile), []byte(contents), 0666)
+	defer os.Remove(getFullPath(tempFile))
 
 	// unset the environment first to make sure it won't interfere with the
 	// file. It might contain settings that is in use so set it back to the
@@ -30,14 +31,13 @@ func TestFileDefaultConfig(t *testing.T) {
 		t.Fatalf("Configuration isn't the expected values: %s / %s", address, token)
 	}
 
-	contents = "token=foobar\nsome=thing\nother=thing\n\n\n"
+	contents = "token=foobar\nsome=thing\nother=thing\n\nsome=thing=other\n\n"
 	ioutil.WriteFile(getFullPath(tempFile), []byte(contents), 0666)
 	address, token = addressTokenFromConfig(tempFile)
 	if address != DefaultAddr || token != "foobar" {
 		t.Fatalf("Configuration isn't the expected values: %s / %s", address, token)
 	}
 
-	os.Remove(getFullPath(tempFile))
 }
 
 func TestEnvironmentConfig(t *testing.T) {

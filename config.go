@@ -3,6 +3,7 @@ package lassie
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
@@ -76,16 +77,26 @@ func readConfig(filename string) (string, string) {
 	}
 	scanner := bufio.NewScanner(bytes.NewReader(buf))
 	scanner.Split(bufio.ScanLines)
+	lineno := 0
 	for scanner.Scan() {
-		words := strings.Split(scanner.Text(), "=")
-		if len(words) == 1 {
+		lineno++
+		line := strings.ToLower(scanner.Text())
+		if len(line) == 0 || line[0] == '#' {
+			// ignore comments and empty lines
 			continue
 		}
-		switch strings.ToLower(strings.TrimSpace(words[0])) {
+		words := strings.Split(scanner.Text(), "=")
+		if len(words) != 2 {
+			fmt.Printf("Not a key value expression on line %d in %s: %s\n", lineno, filename, scanner.Text())
+			continue
+		}
+		switch words[0] {
 		case addressKey:
 			address = strings.TrimSpace(words[1])
 		case tokenKey:
 			token = strings.TrimSpace(words[1])
+		default:
+			fmt.Printf("Unknown keyword on line %d in %s: %s\n", lineno, filename, scanner.Text())
 		}
 	}
 	return address, token

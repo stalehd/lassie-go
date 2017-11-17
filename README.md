@@ -5,7 +5,7 @@ Lassie provides a client for the [REST API](https://api.lora.telenor.io) for
 ## Configuration
 
 The configuration file is located at `${HOME}/.lassie`. The file is a simple
-list of key/value pairs. Additional values are ignored. Comments should start
+list of key/value pairs. Additional values are ignored. Comments must start
 with a `#`:
 
     #
