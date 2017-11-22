@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-// Client is a client for the Congress service.
+// Client is a client for the Telenor LoRa-as-a-Service API.
 type Client struct {
 	addr   string
 	token  string
