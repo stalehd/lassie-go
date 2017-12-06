@@ -60,7 +60,13 @@ func (c *Client) DeleteDevice(appeui, deveui string) error {
 // ScheduleMessage schedules a downstream message to a device. Port is in range 1-223.
 // If the ack flag is set the message will be re-sent until the device acknowledges it.
 // The payload is hex encoded.
-func (c *Client) ScheduleMessage(appeui, deveui string, port uint8, ack bool, hexPayload string) error {
-	msg := DownstreamMessage{port, ack, hexPayload}
+func (c *Client) ScheduleMessage(appeui, deveui string, msg DownstreamMessage) error {
 	return c.create(fmt.Sprintf("/applications/%s/devices/%s/message", appeui, deveui), &msg)
+}
+
+// GetScheduledMessage returns the scheduled message for the device.
+func (c *Client) GetScheduledMessage(appeui, deveui string) (DownstreamMessage, error) {
+	var msg DownstreamMessage
+	err := c.get(fmt.Sprintf("/applications/%s/devices/%s/message", appeui, deveui), &msg)
+	return msg, err
 }
