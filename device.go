@@ -17,6 +17,13 @@ type Device struct {
 	Tags                  map[string]string `json:"tags"`
 }
 
+// DownstreamMessage represents downstream messages to devices.
+type DownstreamMessage struct {
+	Port       uint8  `json:"port"`
+	Ack        bool   `json:"ack"`
+	HexPayload string `json:"data"`
+}
+
 // CreateDevice creates a device.
 func (c *Client) CreateDevice(appeui string, dev Device) (Device, error) {
 	err := c.create(fmt.Sprintf("/applications/%s/devices", appeui), &dev)
@@ -48,4 +55,12 @@ func (c *Client) Device(appeui, deveui string) (Device, error) {
 // DeleteDevice deletes a device.
 func (c *Client) DeleteDevice(appeui, deveui string) error {
 	return c.delete(fmt.Sprintf("/applications/%s/devices/%s", appeui, deveui))
+}
+
+// ScheduleMessage schedules a downstream message to a device. Port is in range 1-223.
+// If the ack flag is set the message will be re-sent until the device acknowledges it.
+// The payload is hex encoded.
+func (c *Client) ScheduleMessage(appeui, deveui string, port uint8, ack bool, hexPayload string) error {
+	msg := DownstreamMessage{port, ack, hexPayload}
+	return c.create(fmt.Sprintf("/applications/%s/devices/%s/message", appeui, deveui), &msg)
 }
