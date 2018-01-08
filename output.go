@@ -116,3 +116,48 @@ func (o *Output) MQTTConfig() (MQTTConfig, error) {
 	}
 	return MQTTConfig{}, errors.New("not a MQTT configuration")
 }
+
+// AWSIoTConfig returns the AWS IoT config for the output
+func (o *Output) AWSIoTConfig() (AWSIoTConfig, error) {
+	if o.Config["type"] == AWSIoTConfigType {
+		return newAWSIoTConfig(o.Config)
+	}
+	return AWSIoTConfig{}, errors.New("not an AWS IoT configuration")
+}
+
+// AWSIoTConfig is an application output configuration for AWS IoT.
+type AWSIoTConfig struct {
+	Endpoint          string `json:"endpoint"`
+	ClientID          string `json:"clientid"`
+	ClientCertificate string `json:"clientCertificate"`
+	PrivateKey        string `json:"privateKey"`
+}
+
+// AWSIoTConfigType is the string identifier for AWS IoT configs.
+const AWSIoTConfigType = "awsiot"
+
+func newAWSIoTConfig(config map[string]interface{}) (AWSIoTConfig, error) {
+	buf, err := json.Marshal(config)
+	if err != nil {
+		return AWSIoTConfig{}, err
+	}
+	ret := AWSIoTConfig{}
+	if err := json.Unmarshal(buf, &ret); err != nil {
+		return AWSIoTConfig{}, err
+	}
+	return ret, nil
+}
+
+// Map returns the configuration as a map
+func (a *AWSIoTConfig) Map() map[string]interface{} {
+	var msg map[string]interface{}
+	buf, _ := json.Marshal(a)
+	json.Unmarshal(buf, &msg)
+	msg["type"] = AWSIoTConfigType
+	return msg
+}
+
+// Type returns the string identifying the output
+func (a *AWSIoTConfig) Type() string {
+	return AWSIoTConfigType
+}
